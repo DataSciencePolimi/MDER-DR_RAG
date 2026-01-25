@@ -1,4 +1,4 @@
-# EnergeniusRAG
+# MDER-DR_RAG
 
 # Docs and Diagram
 
@@ -15,13 +15,13 @@ _Note to self_: conda is only needed to use the same version of python as the se
 create a conda environment using
 
 ```shell
-conda create -n energenius python=3.13
+conda create -n mder-dr python=3.13
 ```
 
 activate it using
 
 ```shell
-conda activate energenius
+conda activate mder-dr
 ```
 
 install the pip packages from the _requirements_ in the env
