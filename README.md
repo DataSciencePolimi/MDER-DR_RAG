@@ -1,6 +1,6 @@
 # MDER-DR_RAG
 
-# Docs and Diagram
+## Docs and Diagram
 
 The folder `docs` is prepared to include relevant documentation and diagrams for the project.
 
@@ -81,7 +81,7 @@ streamlit run streamlit_ui.py
 ```
 
 
-# Citation
+## Citation
 
 ```
 @InProceedings{10.1007/978-3-031-97207-2_4,
