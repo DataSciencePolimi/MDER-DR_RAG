@@ -1,4 +1,4 @@
-# MDER-DR_RAG
+# MDER-DR RAG
 
 ## Docs and Diagram
 
