@@ -56,9 +56,8 @@ class LLMHandler:
                 model=model,
                 model_provider=provider,
                 temperature=temperature,
-                #base_url=PRIVATE_SETINGS["LLM_BASE_URL"],
+                base_url=PRIVATE_SETINGS["LLM_BASE_URL"],
                 #base_url=random.choice(["http://localhost:11434", "http://localhost:11435"]),
-                base_url=random.choice(["http://localhost:11435"])
             )
 
     def __env_creation(self, provider: str) -> None:
