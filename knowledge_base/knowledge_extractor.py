@@ -629,10 +629,9 @@ class KnowledgeExtractor:
             #collection_entities.delete(ids=collection_entities.get()["ids"])
             entities = graph.get_entities()
             for index, row in tqdm(list(entities.iterrows()), desc="Embedding entities: "):
-                emb = self.embeddings.embed_query(row["name"])
+                if len(row["description"]) > 1500:
+                    row["description"] = row["description"][:1500] + "..."
                 collection_entities.add(ids=[row["entity"]], embeddings=[emb])
-                print(row["entity"])
-                print(row["description"])
                 emb_desc = self.embeddings.embed_query(row["description"])
                 collection_descriptions.add(ids=[row["entity"]], embeddings=[emb_desc])
 
@@ -654,6 +653,8 @@ class KnowledgeExtractor:
             #collection_triples.delete(ids=collection_triples.get()["ids"])
             triples = graph.get_triples()
             for index, row in tqdm(list(triples.iterrows()), desc="Embedding triples: "):
+                if len(row["description"]) > 1500:
+                    row["description"] = row["description"][:1500] + "..."
                 emb = self.embeddings.embed_query(row["description"])
                 collection_triples.add(ids=[row["triple"]], embeddings=[emb])
 
@@ -661,6 +662,8 @@ class KnowledgeExtractor:
             #collection_chunks.delete(ids=collection_chunks.get()["ids"])
             chunks = graph.get_chunks()
             for index, row in tqdm(list(chunks.iterrows()), desc="Embedding chunks: "):
+                if len(row["content"]) > 1500:
+                    row["content"] = row["content"][:1500] + "..."
                 emb = self.embeddings.embed_query(row["content"])
                 collection_chunks.add(ids=[row["chunk"]], embeddings=[emb])
 
