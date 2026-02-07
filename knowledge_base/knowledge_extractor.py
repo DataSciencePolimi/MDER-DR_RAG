@@ -292,7 +292,7 @@ class KnowledgeExtractor:
         chunks = processed_docs
 
         # Semantic chunker
-        """ chunker = SemanticChunker(
+        chunker = SemanticChunker(
             embeddings=self.embeddings,
             sentence_split_regex=r"(?<=[.!?|])\s+",
             breakpoint_threshold_type='standard_deviation', breakpoint_threshold_amount=2,
@@ -338,7 +338,7 @@ class KnowledgeExtractor:
             # Final chunks list
             for text in limited_chunks:
                 temp_chunks.append(chunk.model_copy(update={"page_content": text}))
-        chunks = temp_chunks """
+        chunks = temp_chunks
 
         print(f"> Number of documents: {len(processed_docs)}")
         print(f"> Number of chunks: {len(chunks)}")
@@ -548,6 +548,9 @@ class KnowledgeExtractor:
         if load_cached_triple_descriptions:
             try:
                 print("Trying to load existing rdf_graph_triple_descriptions.ttl")
+                # Re-initialize RDF Graph
+                graph = EnergeniusGraph()
+                graph.load_ontology()
                 graph.load_from_file(os.path.join(path, f"{file_name}_triple_descriptions.ttl")) # Load
             except FileNotFoundError:
                 print("No existing knowledge base found.")
@@ -578,6 +581,9 @@ class KnowledgeExtractor:
         if load_cached_entity_descriptions:
             try:
                 print("Trying to load existing rdf_graph.ttl")
+                # Re-initialize RDF Graph
+                graph = EnergeniusGraph()
+                graph.load_ontology()
                 graph.load_from_file(os.path.join(path, f"{file_name}.ttl")) # Load
             except FileNotFoundError:
                 print("No existing knowledge base found.")
