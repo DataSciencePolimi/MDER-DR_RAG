@@ -15,7 +15,7 @@ class Guru:
     """
 
     def __init__(self, provider: str, model: str, embedding: str, language: str,
-                 temperature: float, answer_length: str, region: str, use_knowledge: bool = True) -> None:
+                 temperature: float, answer_length: str, knowledge_base: str, use_knowledge: bool = True) -> None:
         """_Initialize the Guru class._"""
         self.llm = LLMHandler(
             provider=provider,
@@ -29,11 +29,11 @@ class Guru:
             model=model,
             embedding=embedding,
             language=language,
-            knowledge_base_path=f"files_{region}"
+            knowledge_base_path=f"files_{knowledge_base}"
         )
         self.use_knowledge = use_knowledge
         self.answer_length = answer_length
-        self.region = region
+        self.knowledge_base = knowledge_base
         self.language = language
 
     def load_past_messages(self, messages: list[BaseMessage]) -> None:
@@ -65,7 +65,7 @@ Reply EXTREMELY BRIEFLY in {self.language}.
 Provide only the answer.
         """
         if self.use_knowledge:
-            return self.llm.generate_response(self.know_base.user_message(message, self.answer_length, self.region), message, False)
+            return self.llm.generate_response(self.know_base.user_message(message, self.answer_length, self.knowledge_base), message, False)
         else:
             return self.llm.generate_response(llm_only, message, use_past_history=False)
 
@@ -90,7 +90,7 @@ Reply EXTREMELY BRIEFLY in {self.language}.
 Provide only the answer.
         """
         if self.use_knowledge:
-            yield from self.llm.generate_response_stream(self.know_base.user_message(message, self.answer_length, self.region), message, False)
+            yield from self.llm.generate_response_stream(self.know_base.user_message(message, self.answer_length, self.knowledge_base), message, False)
         else:
             yield from self.llm.generate_response_stream(llm_only, message, use_past_history=False)
         
@@ -98,9 +98,9 @@ Provide only the answer.
         self.know_base.language = language
         self.llm.set_language(language)
         
-    def set_region(self, region: str) -> None:
-        self.region = region
-        self.know_base.knowledge_base_path = f"files_{region}"
+    def set_knowledge_base(self, knowledge_base: str) -> None:
+        self.knowledge_base = knowledge_base
+        self.know_base.knowledge_base_path = f"files_{knowledge_base}"
         
     def set_temperature(self, temperature: float) -> None:
         self.temperature = temperature
