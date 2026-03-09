@@ -24,7 +24,7 @@ Edit `private_settings.py` to set API keys and runtime options (local vs online 
 
 ## Run modes
 
-### 1) Web interface (Streamlit)
+### 1) Run web interface (Streamlit)
 
 Use the Streamlit entrypoint:
 
@@ -32,7 +32,7 @@ Use the Streamlit entrypoint:
 streamlit run streamlit_ui.py
 ```
 
-### 2) API mode
+### 2) Run question answering directly
 
 Instantiate the `Guru` class from:
 
@@ -50,7 +50,7 @@ print(response)
 
 #### Guru class
 
-`Guru` is the main API entry point for question answering.
+`Guru` is the main entry point for question answering.
 
 #### Parameters needed to instantiate `Guru`
 
@@ -130,7 +130,7 @@ python run_benchmark.py
 - `answer_question.py` — CLI-style question answering entrypoint
 - `streamlit_ui.py` — web interface
 - `run_benchmark.py` — benchmark runner
-- `orchestrator/guru.py` — API orchestrator class (`Guru`)
+- `orchestrator/guru.py` — main orchestrator class (`Guru`)
 - `knowledge_base/` — extraction and storage logic
 - `llm/` — LLM integration layer
 
