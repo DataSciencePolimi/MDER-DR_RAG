@@ -38,16 +38,6 @@ Instantiate the `Guru` class from:
 
 - `orchestrator/guru.py`
 
-Example (minimal), from `answer_question.py`:
-
-```python
-from orchestrator.guru import Guru
-
-guru = Guru(...)
-response = guru.user_message("Your question here")
-print(response)
-```
-
 #### Guru class
 
 `Guru` is the main entry point for question answering.
@@ -70,7 +60,7 @@ print(response)
   Knowledge base storage folder (similar concept used in KB creation, e.g., `"Switzerland"`).
   
 
-Example with explicit parameters:
+Example with explicit parameters, from `answer_question.py`:
 
 ```python
 from orchestrator.guru import Guru
@@ -85,6 +75,9 @@ guru = Guru(
     knowledge_base="Switzerland",
     use_knowledge=True
 )
+
+response = guru.user_message("Your question here")
+print(response)
 ```
 
 #### Inputs and outputs
