@@ -92,7 +92,7 @@ Instantiate the `Guru` class from:
 - `answer_length` (`str`)  
    Output style/length (example: `"compact"`).
 - `knowledge_base` (`str`)  
-  Knowledge base storage folder (similar concept used in KB creation, e.g., `"Switzerland"`).
+  Knowledge base storage folder (similar concept used in KB creation, e.g., `"Tomato_recipes"`).
   
 Example with explicit parameters, from `answer_question.py`:
 
@@ -106,7 +106,7 @@ guru = Guru(
     language="english",
     temperature=0,
     answer_length="compact",
-    knowledge_base="Italy",
+    knowledge_base="Tomato_recipes",
     use_knowledge=True
 )
 
