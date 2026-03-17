@@ -83,7 +83,7 @@ guru = Guru(
     temperature=0,
     answer_length="compact",
     knowledge_base="Switzerland",
-    use_knowledge: bool = True
+    use_knowledge=True
 )
 ```
 
