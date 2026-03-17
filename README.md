@@ -76,7 +76,7 @@ guru = Guru(
     use_knowledge=True
 )
 
-response = guru.user_message("What is the best way to save energy with a washing machine?")
+response = guru.user_message("What are the ingredients of Pasta al pomodoro?")
 print(response)
 ```
 
