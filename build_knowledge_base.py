@@ -15,23 +15,6 @@ ke.run(
     folder="files_test",
     file_name="rdf_graph",
     html_links=[
-        # Vecchie sources
-        #"https://www.agenziaentrate.gov.it/portale/web/guest/aree-tematiche/casa/agevolazioni/bonus-mobili-ed-elettrodomestici",
-        #"https://italiainclassea.enea.it/le-tecnologie/", # MAYBE DISCONTINUED
-        #"https://luce-gas.it/guida/risparmio-energetico",
-        #"https://www.aegcoop.it/migliori-lampadine/",
-        #"https://www.aegcoop.it/risparmiare-con-gli-elettrodomestici/",
-        #"https://www.aegcoop.it/consumi-standby-elettrodomestici/",
-        #"https://www.aegcoop.it/risparmiare-acqua-calda/",
-        #"https://www.aegcoop.it/riscaldamento-elettrico/",
-        #"https://www.aegcoop.it/lavatrice-risparmiare/",
-        "https://www.svizzeraenergia.ch/casa/",
-        "https://www.svizzeraenergia.ch/casa/riscaldamento/",
-        "https://www.ticinoenergia.ch/it/domande-frequenti.html",
-        #"https://www.svizzeraenergia.ch/energie-rinnovabili/teleriscaldamento/",
-        #"https://www.uvek.admin.ch/uvek/it/home/datec/votazioni/votazione-sulla-legge-sull-energia/efficienza-energetica.html", # DISCONTINUED!
-
-		# Documento legale tesi Martina
-        "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32023L1791",
+        "https://en.wikipedia.org/wiki/Pasta_al_pomodoro",
     ],
 )
