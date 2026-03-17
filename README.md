@@ -24,7 +24,35 @@ Edit `private_settings.py` to set API keys and runtime options (local vs online 
 
 ## Run modes
 
-### 1) Run web interface (Streamlit)
+### 1) Create / rebuild knowledge base
+
+Run the knowledge base creator script:
+
+```bash
+python build_knowledge_base.py
+```
+
+This script mainly calls `KnowledgeExtractor.run(...)` with:
+- `knowledge_base="Tomato recipes"`
+- one or more URLs in `html_links`
+- many `load_cached_*` flags default to `False`
+
+
+Example with explicit parameters, from `build_knowledge_base.py`:
+
+```python
+ke.run(
+    knowledge_base="Tomato_recipes",
+    html_links=[
+        "https://en.wikipedia.org/wiki/Tomato_sauce",
+        "https://en.wikipedia.org/wiki/Pasta_al_pomodoro",
+    ],
+)
+```
+
+In this example, artifacts are written under `knowledge_base/data/Tomato_recipes/`
+
+### 2) Run web interface (Streamlit)
 
 Use the Streamlit entrypoint:
 
@@ -32,7 +60,7 @@ Use the Streamlit entrypoint:
 streamlit run streamlit_ui.py
 ```
 
-### 2) Run question answering directly
+### 3) Run question answering directly
 
 Instantiate the `Guru` class from:
 
@@ -101,21 +129,26 @@ print(response)
 2. Pass a question string to `user_message(...)`.
 3. Return or print the resulting answer string.
 
-### 3) Create / rebuild knowledge base
-
-Run the knowledge base creator script:
-
-```bash
-python build_knowledge_base.py
-```
-
 ### 4) Run benchmark
+
+Before running the benchmark, you must provide a dataset file inside the `benchmark/` directory.
+
+- Create a CSV file (e.g., `benchmark_dataset.csv`) in `benchmark/`
+- This file should contain:
+  - The list of questions to evaluate
+  - The corresponding knowledge base
 
 You can run the benchmark with:
 
 ```bash
 python run_benchmark.py
 ```
+
+The script will:
+- Load the dataset from the benchmark/ folder
+- Instantiate the Guru pipeline using the specified settings
+- Execute all questions
+- Collect and store answers in a separated `.csv` file
 
 ## Main project files
 
@@ -156,12 +189,11 @@ MDER-DR_RAG/
 ├── llm/
 │   ├── __init__.py
 │   └── langchain.py                  # LLM + embedding integration layer
-├── orchestrator/
-│   ├── __init__.py
-│   ├── abstract_orchestrator.py
-│   ├── guru.py                       # Main API orchestrator class (Guru)
-│   └── live_orchestrator.py
-└── data/
+└── orchestrator/
+    ├── __init__.py
+    ├── abstract_orchestrator.py
+    ├── guru.py                       # Main API orchestrator class (Guru)
+    └── live_orchestrator.py
 ```
 
 ### Notes
