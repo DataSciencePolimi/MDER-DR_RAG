@@ -66,7 +66,7 @@ class KnowledgeExtractor:
             llm=self.llm_handler.get_model(),
             #node_properties=True,
             #relationship_properties=True,
-            #ignore_tool_usage=True,
+            ignore_tool_usage=True,
             additional_instructions="""Ensure that:
 - No detail is omitted, even if implicit or inferred
 - Compound or nested relationships are captured
@@ -85,8 +85,8 @@ class KnowledgeExtractor:
         folder: str = "files",
         html_links: list[str] = None,
         documents: list[dict] = None,
-        load_cached_docs: bool = False,
-        load_cached_preprocessed_chunks: bool = False,
+        load_cached_docs: bool = True,
+        load_cached_preprocessed_chunks: bool = True,
         load_cached_graph_documents: bool = False,
         load_cached_graph_documents_disambigued: bool = False,
         load_cached_triple_descriptions: bool = False,
@@ -135,7 +135,7 @@ class KnowledgeExtractor:
                     raw_docs.extend(html_loader.load())
 
                 # Load PDF documents and convert to HTML
-                """ for pdf_url in pdf_urls:
+                for pdf_url in pdf_urls:
                     try:
                         # Download PDF from URL
                         response = requests.get(pdf_url, timeout=30)
@@ -157,7 +157,7 @@ class KnowledgeExtractor:
                         html_content = output_string.getvalue()
 
                         # Parse and convert spans to headings
-                        html_content = self.__convert_spans_to_headings(html_content)
+                        html_content = convert_spans_to_headings(html_content)
 
                         # Create a Document object similar to HTML loader output
                         pdf_document = Document(
@@ -170,7 +170,7 @@ class KnowledgeExtractor:
 
                     except Exception as e:
                         print(f"Error loading PDF from {pdf_url}: {e}")
-                        continue """
+                        continue
 
                 joblib.dump(raw_docs, os.path.join(path, "raw_docs.joblib")) # Save
             
@@ -193,16 +193,16 @@ class KnowledgeExtractor:
 
         # Strip html tags
         processed_docs = raw_docs
-        #for doc in processed_docs:
-        #    doc.page_content = self.__extract_main_content(doc.page_content)
-        chunks = processed_docs
+        for doc in processed_docs:
+            doc.page_content = extract_main_content(doc.page_content)
+        #chunks = processed_docs
 
         # Semantic chunker
         chunker = SemanticChunker(
             embeddings=self.embeddings,
             sentence_split_regex=r"(?<=[.!?|])\s+",
             breakpoint_threshold_type='standard_deviation', breakpoint_threshold_amount=2,
-            min_chunk_size=100
+            min_chunk_size=100,
         )
         chunks = chunker.split_documents(processed_docs)
         
@@ -270,7 +270,8 @@ class KnowledgeExtractor:
                     
                 # Translation
                 if "en" not in preprocessed_chunks[i].metadata["language"].lower():
-                    preprocessed_chunks[i].page_content = self._strip_quotes(
+                    print("translating chunk from language:", preprocessed_chunks[i].metadata["language"])
+                    preprocessed_chunks[i].page_content = strip_quotes(
                         self.llm_handler.generate_response(translate_chunk(), f"{preprocessed_chunks[i].page_content}", False)
                     )
 
@@ -284,7 +285,7 @@ class KnowledgeExtractor:
                     next_ if next_ else None, #self._get_first_sentence(next_) if next_ else None
                 ]))
                 #print(f"\n\n{context}")
-                preprocessed_chunks[i].page_content = self._strip_quotes(
+                preprocessed_chunks[i].page_content = strip_quotes(
                     self.llm_handler.generate_response(summarize_chunk(context), curr, False)
                 ).replace("\n\n", "\n")
 
@@ -338,7 +339,7 @@ class KnowledgeExtractor:
         for i, graph_doc_unique_source in enumerate(tqdm({doc.source.metadata["source"] for doc in graph_documents}, desc="RDF graph creation: ")):
 
             # Document
-            doc_id = self.__remove_non_alphanumerical(graph_doc_unique_source)
+            doc_id = remove_non_alphanumerical(graph_doc_unique_source)
             doc_uri = graph.DATA[f"Document_{doc_id}"]
             graph.rdf_graph.add((doc_uri, RDF.type, graph.ONTO.Document))
             graph.rdf_graph.add((doc_uri, graph.ONTO.hasUri, Literal(doc_id, datatype=XSD.string)))
@@ -348,7 +349,7 @@ class KnowledgeExtractor:
             for j, chunk in enumerate(filtered_chunks):
                 
                 # Chunk
-                doc_id = self.__remove_non_alphanumerical(chunk.source.metadata["source"])
+                doc_id = remove_non_alphanumerical(chunk.source.metadata["source"])
                 doc_uri = graph.DATA[f"Document_{doc_id}"]
                 chunk_uri = graph.DATA[f"Chunk_{doc_id}_{j}"]
                 graph.rdf_graph.add((chunk_uri, RDF.type, graph.ONTO.Chunk))
@@ -367,12 +368,12 @@ class KnowledgeExtractor:
                 for k, rel in enumerate(chunk.relationships):
 
                     # Source entity
-                    source_entity_id = self.__remove_non_alphanumerical(rel.source.id)
+                    source_entity_id = remove_non_alphanumerical(rel.source.id)
                     source_entity_uri = graph.DATA[f"Entity_{source_entity_id}"]
                     graph.rdf_graph.add((source_entity_uri, RDF.type, graph.ONTO.Entity))
                     graph.rdf_graph.add((source_entity_uri, graph.ONTO.hasName, Literal(rel.source.id, datatype=XSD.string)))
                     
-                    source_entity_type_id = self.__remove_non_alphanumerical(rel.source.type)
+                    source_entity_type_id = remove_non_alphanumerical(rel.source.type)
                     source_entity_type_uri = graph.DATA[f"EntityType_{source_entity_type_id}"]
                     graph.rdf_graph.add((source_entity_type_uri, RDF.type, graph.ONTO.EntityType))
                     graph.rdf_graph.add((source_entity_type_uri, graph.ONTO.hasName, Literal(rel.source.type, datatype=XSD.string)))
@@ -390,12 +391,12 @@ class KnowledgeExtractor:
                     graph.rdf_graph.add((source_entity_type_uri, graph.ONTO.belongsToDocument, doc_uri))
 
                     # Target entity
-                    target_entity_id = self.__remove_non_alphanumerical(rel.target.id)
+                    target_entity_id = remove_non_alphanumerical(rel.target.id)
                     target_entity_uri = graph.DATA[f"Entity_{target_entity_id}"]
                     graph.rdf_graph.add((target_entity_uri, RDF.type, graph.ONTO.Entity))
                     graph.rdf_graph.add((target_entity_uri, graph.ONTO.hasName, Literal(rel.target.id, datatype=XSD.string)))
                     
-                    target_entity_type_id = self.__remove_non_alphanumerical(rel.target.type)
+                    target_entity_type_id = remove_non_alphanumerical(rel.target.type)
                     target_entity_type_uri = graph.DATA[f"EntityType_{target_entity_type_id}"]
                     graph.rdf_graph.add((target_entity_type_uri, RDF.type, graph.ONTO.EntityType))
                     graph.rdf_graph.add((target_entity_type_uri, graph.ONTO.hasName, Literal(rel.target.type, datatype=XSD.string)))
@@ -413,7 +414,7 @@ class KnowledgeExtractor:
                     graph.rdf_graph.add((target_entity_type_uri, graph.ONTO.belongsToDocument, doc_uri))
                 
                     # Relationship
-                    rel_id = self.__remove_non_alphanumerical(rel.type)
+                    rel_id = remove_non_alphanumerical(rel.type)
                     rel_uri = graph.DATA[f"Relationship_{rel_id}"]
                     graph.rdf_graph.add((rel_uri, RDF.type, graph.ONTO.Relationship))
                     graph.rdf_graph.add((rel_uri, graph.ONTO.hasName, Literal(rel.type, datatype=XSD.string)))
@@ -473,7 +474,7 @@ class KnowledgeExtractor:
 
                 chunk = f"{row['prev_chunk_content']}\n{row['chunk_content']}\n{row['next_chunk_content']}"
                 
-                description = self._strip_quotes(
+                description = strip_quotes(
                     self.llm_handler.generate_response(
                         extract_descriptions_for_triples(f"{chunk}"), f"{row['source_entity_name']} {row['relationship_name']} {row['target_entity_name']}", False)
                 ).replace("\n\n", " ").replace("\n", " ")
@@ -507,7 +508,7 @@ class KnowledgeExtractor:
                 # Descriptions
                 entity_description_from_triples += "\n" + "\n".join(graph.get_entity_triples(row["entity"])["description"])
                 print(entity_description_from_triples)
-                description = self._strip_quotes(
+                description = strip_quotes(
                     self.llm_handler.generate_response(
                         extract_descriptions_for_entities(f"{entity_description_from_triples}"), f"{row['name']}", False)
                 ).replace("\n\n", " ").replace("\n", " ")
@@ -716,65 +717,3 @@ def to_keep(s1: str, s2: str) -> str:
     elif s2c > s1c and s2c < 5:
         return s2
     return s1 if len(s1) <= len(s2) else s2
-
-
-def syntactic_disambiguation(graph_documents, embeddings, llm_handler, processor, comparator, iterations: int = 5):
-    """Perform syntactic disambiguation across graph documents."""
-    all_entities = {}
-
-    # --- Step 1: Filter and normalize relationships ---
-    for graph_doc in graph_documents:
-        graph_doc.relationships = [
-            rel for rel in graph_doc.relationships
-            if is_valid_text(rel.source.id)
-            and is_valid_text(rel.type)
-            and is_valid_text(rel.target.id)
-        ]
-
-        for rel in graph_doc.relationships:
-            # Debug: overly long entities
-            if rel.source.id.count(' ') > 6 or rel.target.id.count(' ') > 6:
-                print(rel.source.id, rel.type, rel.target.id)
-
-            # Normalize and collect entities
-            for attr in [("source", "id"), ("source", "type"), ("target", "id"), ("target", "type")]:
-                obj, field = attr
-                value = getattr(rel.__getattribute__(obj), field)
-                normalized = normalize_entity(value, processor)
-                if normalized:
-                    setattr(rel.__getattribute__(obj), field, normalized)
-                    all_entities[normalized] = normalized
-
-    # --- Step 2: Iterative merging ---
-    merged_map = {}
-    for _ in range(iterations):
-        if not all_entities:
-            break
-
-        ids = list(all_entities.keys())
-        embeddings_matrix = np.array([embeddings.embed_query(key) for key in ids])
-        similarity_matrix = cosine_similarity(embeddings_matrix)
-
-        new_merged_map = {}
-        for i in tqdm(range(len(ids)), desc="Syntactic disambiguation"):
-            for j in range(i + 1, len(ids)):
-                if similarity_matrix[i][j] > 0.9 and not re.search(r'\d', ids[i]) and not re.search(r'\d', ids[j]):
-                    same = llm_handler.generate_response(comparator(), f"{ids[i]}\n{ids[j]}", False) == "Same"
-                    if same:
-                        ent = to_keep(ids[i], ids[j])
-                        print(f"{ids[i]} - {ids[j]} -> {ent}")
-                        new_merged_map[ids[i]] = ent
-                        new_merged_map[ids[j]] = ent
-
-        # Update entities
-        all_entities = {v: v for v in new_merged_map.values()}
-
-        # --- Step 3: Update graph documents ---
-        for graph_doc in graph_documents:
-            for rel in graph_doc.relationships:
-                for obj, field in [("source", "id"), ("source", "type"), ("target", "id"), ("target", "type")]:
-                    value = getattr(rel.__getattribute__(obj), field)
-                    if value in new_merged_map:
-                        setattr(rel.__getattribute__(obj), field, new_merged_map[value])
-
-    return graph_documents
