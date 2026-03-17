@@ -11,7 +11,7 @@ class LiveOrchestrator(AbstractOrchestrator):
     """
 
     def __init__(self, provider: str, model: str, embedding: str, temperature: float,
-                 language: str, answer_length: str, region: str, use_knowledge: bool = True) -> None:
+                 language: str, answer_length: str, knowledge_base: str, use_knowledge: bool = True) -> None:
         """Initialize the LiveOrchestrator with the model name, provider, and API key."""
         self.guru = Guru(
             provider=provider,
@@ -20,7 +20,7 @@ class LiveOrchestrator(AbstractOrchestrator):
             language=language,
             temperature=temperature,
             answer_length=answer_length,
-            region=region,
+            knowledge_base=knowledge_base,
             use_knowledge=use_knowledge
         )
        
