@@ -38,7 +38,7 @@ from .utils.graph_prompt import (
 )
 from .utils.graph_helpers import process_name_or_relationship, normalize_l2, sparql_query
 from .utils.energenius_graph import EnergeniusGraph
-from .utils.syntactic_disambiguator import SyntacticDisambiguator
+from .utils.disambiguator import Disambiguator
 from itertools import permutations
 
 
@@ -85,8 +85,8 @@ class KnowledgeExtractor:
         folder: str = "files",
         html_links: list[str] = None,
         documents: list[dict] = None,
-        load_cached_docs: bool = True,
-        load_cached_preprocessed_chunks: bool = True,
+        load_cached_docs: bool = False,
+        load_cached_preprocessed_chunks: bool = False,
         load_cached_graph_documents: bool = False,
         load_cached_graph_documents_disambigued: bool = False,
         load_cached_triple_descriptions: bool = False,
@@ -312,7 +312,7 @@ class KnowledgeExtractor:
             joblib.dump(graph_documents, os.path.join(path, "graph_documents.joblib")) # Save
 
 
-        # --- Syntactic disambiguation ---
+        # --- Disambiguation ---
 
         if load_cached_graph_documents_disambigued:
             try:
@@ -323,7 +323,7 @@ class KnowledgeExtractor:
                 return
         else:
             
-            syn = SyntacticDisambiguator(graph_documents, self.embeddings.embed_query, self.llm_handler.generate_response)
+            syn = Disambiguator(graph_documents, self.embeddings.embed_query, self.llm_handler.generate_response)
             graph_documents_disambigued = syn.run()
                 
             joblib.dump(graph_documents_disambigued, os.path.join(path, "graph_documents_disambigued.joblib")) # Save
@@ -694,7 +694,7 @@ def convert_spans_to_headings(html_content):
 
         
 
-# Syntactic disambiguation helper functions
+# Disambiguation helper functions
 
 def is_valid_text(text: str) -> bool:
     """Check if text contains alphanumeric characters and <= 5 words."""
