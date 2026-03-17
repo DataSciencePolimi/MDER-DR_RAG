@@ -116,24 +116,10 @@ print(response)
 
 ### Inputs and outputs
 
-**Primary method used in this project:**
-
 - `user_message(question)`
-
-**Input:**
-
-- `question` (`str`): the user request/question in natural language.  
-  Example: `"How can I reduce heating energy consumption at home?"`
-
-**Output:**
-
-- `response` (`str`): generated answer text from the RAG pipeline, ready to be shown to the user or returned by an API endpoint.
-
-**Minimal usage flow:**
-
-1. Create a `Guru` instance with your project configuration.
-2. Pass a question string to `user_message(...)`.
-3. Return or print the resulting answer string.
+- Input: `question` (`str`): the user request/question in natural language.  
+  Example: `"What are the ingredients of Pasta al pomodoro?"`
+- Output: `response` (`str`): generated answer text from the RAG pipeline, ready to be shown to the user or returned by an API endpoint.
 
 <br>
 
