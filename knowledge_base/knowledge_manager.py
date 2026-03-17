@@ -231,55 +231,38 @@ class KnowledgeManager:
                 rel.target.embedding = self.embeddings.embed_query(rel.target.id)
 
                 # --- Source ---
-
-                # Source types
-                # NOTE: type-based filtering is currently disabled (kept as reference).
-                """ source_types = collection_types.query(
-                    query_embeddings=rel.source.properties["type_embedding"],
-                    n_results=30,
-                )
-                source_types = [{"id": id, "distance": distance} for (id, distance) in zip(source_types["ids"][0], source_types["distances"][0]) if distance < 0.5] if source_types else []
-                print(f"\n\n-----Types for {rel.source.type}-----")
-                print("\n".join([f"{type}" for type in source_types])) """
                 
                 # Source entities
-                #allowed_source_entities = self.graph.get_entities(types=[id["id"] for id in source_types])["entity"].to_list() if source_types else []
-                #source_entities = collection_descriptions.query( # FOR MDER-DR
                 source_entities = collection_entities.query( # FOR MDER-DR AND GRAPH-RAG
                     query_embeddings=rel.source.embedding,
-                    #ids=[a for a in allowed_source_entities],
-                    n_results=5,
-                )# if allowed_source_entities else []
-                source_entities = [{"id": id, "distance": distance} for (id, distance) in zip(source_entities["ids"][0], source_entities["distances"][0]) if distance < 0.5] if source_entities else []
+                    n_results=GRAPH_PARAMETER["TOP_ENTITIES"],
+                )
+                source_entities = [{"id": id, "distance": distance} for (id, distance) in zip(source_entities["ids"][0], source_entities["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD"]] if source_entities else []
                 print(f"\n\n-----Entities for {rel.source.id}-----")
                 print("\n".join([f"{entity}" for entity in source_entities]))
 
                 # Merge into global candidate list and cap size.
                 all_entities = self._update_entries(all_entities, source_entities)
-                all_entities = all_entities[:20]
+                all_entities = all_entities[:GRAPH_PARAMETER["MAXIMUM_ENTITIES"]]
 
             # Get entities
             if all_entities:
 
                 all_entity_descriptions = self.graph.get_entity_descriptions(entities=[id["id"] for id in all_entities], distances=[id["distance"] for id in all_entities]) # FOR MDER-DR
-                #all_entity_descriptions = self.graph.get_entity_chunks(entities=[id["id"] for id in all_entities], distances=[id["distance"] for id in all_entities]) # FOR GRAPH-RAG
                 context_data += "\n" + dataframe_to_text(all_entity_descriptions, context_name='')
 
             # Augmentation step using vector-based retrieval
             chunks = collection_descriptions.query( # FOR MDER-DR
-            #chunks = collection_entities.query( # FOR GRAPH-RAG
-            #chunks = collection_chunks.query( # FOR VECTOR-RAG
                 query_embeddings=message_embedding,
-                n_results=5,
+                n_results=GRAPH_PARAMETER["TOP_ENTITIES"],
             )
-            chunks = [{"id": id, "distance": distance} for (id, distance) in zip(chunks["ids"][0], chunks["distances"][0]) if distance < 0.6] if chunks else []
+            chunks = [{"id": id, "distance": distance} for (id, distance) in zip(chunks["ids"][0], chunks["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD"]] if chunks else []
             print(f"\n\n-----Chunks for {message}-----")
             print("\n".join([f"{chunk}" for chunk in chunks]))
 
             # Append chunk-like context if available
             if chunks:
-
-                #chunks = self.graph.get_chunks(chunks=[id["id"] for id in chunks], distances=[id["distance"] for id in chunks]) # FOR VECTOR-RAG
+                
                 context_data += "\n\n" + dataframe_to_text(chunks, context_name='')
 
             # Build final graph-aware prompt from language, length, and context
@@ -296,87 +279,19 @@ class KnowledgeManager:
             
             # Search for the most similar entities based on the question
             entities = collection_descriptions.query( # FOR MDER-DR
-            #entities = collection_entities.query( # FOR GRAPH-RAG
-            #entities = collection_chunks.query( # FOR VECTOR-RAG
                 query_embeddings=message_embedding,
-                n_results=10,
+                n_results=GRAPH_PARAMETER["TOP_ENTITIES_FALLBACK"],
             )
-            entities = [{"id": id, "distance": distance} for (id, distance) in zip(entities["ids"][0], entities["distances"][0]) if distance < 0.6] if entities else []
+            entities = [{"id": id, "distance": distance} for (id, distance) in zip(entities["ids"][0], entities["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD_FALLBACK"]] if entities else []
             print(f"\n\n-----Entitites for {message}-----")
             print("\n".join([f"{entity}" for entity in entities]))
         
             # No triple found: return wrong answer prompt
             if not entities:
                 break
-
-            # FOR GRAPH-RAG (disabled)
-            """ # Get outgoing relationships
-            allowed_source_entities_outgoing_relationships = self.graph.get_outgoing_relationships(entities=entities)["relationship"].to_list() if entities else []
-            source_entities_outgoing_relationships = []
-            for emb in [message_embedding]:
-                res = collection_relationships.query(
-                    query_embeddings=emb,
-                    ids=[a for a in allowed_source_entities_outgoing_relationships],
-                    n_results=10,
-                ) if allowed_source_entities_outgoing_relationships else []
-                source_entities_outgoing_relationships.extend([{"id": id, "distance": distance} for (id, distance) in zip(res["ids"][0], res["distances"][0]) if distance < 0.6] if res else [])
-            print(f"\n\n-----Outgoing relationships-----")
-            print("\n".join([f"{relationship}" for relationship in source_entities_outgoing_relationships]))
-            
-            # FOR GRAPH-RAG
-            # 1-Hop target entities
-            allowed_one_hop_target_entities = self.graph.get_triples(rel=[id["id"] for id in source_entities_outgoing_relationships], source=[id["id"] for id in entities])["target"].to_list() if source_entities_outgoing_relationships and entities else []
-            one_hop_target_entities = []
-            for emb in [message_embedding]:
-                res = collection_entities.query(
-                    query_embeddings=emb,
-                    ids=[a for a in allowed_one_hop_target_entities],
-                    n_results=5,
-                ) if allowed_one_hop_target_entities else []
-                one_hop_target_entities.extend([{"id": id, "distance": distance} for (id, distance) in zip(res["ids"][0], res["distances"][0]) if distance < 0.99] if res else [])
-            print(f"\n\n-----1-hop Outgoing Entities-----")
-            print("\n".join([f"{entity}" for entity in one_hop_target_entities]))
-
-            # FOR GRAPH-RAG
-            # Store in "all entities"
-            entities = self._update_entries(entities, one_hop_target_entities)
-
-            # FOR GRAPH-RAG
-            # Get incoming relationships
-            allowed_target_entities_incoming_relationships = self.graph.get_incoming_relationships(entities=entities)["relationship"].to_list() if entities else []
-            target_entities_incoming_relationships = []
-            for emb in [message_embedding]:
-                res = collection_relationships.query(
-                    query_embeddings=emb,
-                    ids=[a for a in allowed_target_entities_incoming_relationships],
-                    n_results=10,
-                ) if allowed_target_entities_incoming_relationships else []
-                target_entities_incoming_relationships.extend([{"id": id, "distance": distance} for (id, distance) in zip(res["ids"][0], res["distances"][0]) if distance < 0.6] if res else [])
-            print(f"\n\n-----Incoming relationships-----")
-            print("\n".join([f"{relationship}" for relationship in target_entities_incoming_relationships]))
-            
-            # FOR GRAPH-RAG
-            # 1-Hop source entities
-            allowed_one_hop_source_entities = self.graph.get_triples(rel=[id["id"] for id in target_entities_incoming_relationships], target=[id["id"] for id in entities])["source"].to_list() if target_entities_incoming_relationships and entities else []
-            one_hop_source_entities = []
-            for emb in [message_embedding]:
-                res = collection_entities.query(
-                    query_embeddings=emb,
-                    ids=[a for a in allowed_one_hop_source_entities],
-                    n_results=5,
-                ) if allowed_one_hop_source_entities else []
-                one_hop_source_entities.extend([{"id": id, "distance": distance} for (id, distance) in zip(res["ids"][0], res["distances"][0]) if distance < 0.99] if res else [])
-            print(f"\n\n-----1-hop Incoming Entities-----")
-            print("\n".join([f"{entity}" for entity in one_hop_source_entities]))
-
-            # FOR GRAPH-RAG
-            # Store in "all entities"
-            entities = self._update_entries(entities, one_hop_source_entities) """
             
             # Build textual context from retrieved entity descriptions
             entity_descriptions = self.graph.get_entity_descriptions(entities=[id["id"] for id in entities], distances=[id["distance"] for id in entities]) # FOR MDER-DR
-            #entity_descriptions = self.graph.get_entity_chunks(entities=[id["id"] for id in entities], distances=[id["distance"] for id in entities]) # FOR GRAPH-RAG
-            #entity_descriptions = self.graph.get_chunks(chunks=[id["id"] for id in entities], distances=[id["distance"] for id in entities]) # FOR VECTOR-RAG
             context_data = dataframe_to_text(entity_descriptions, context_name='')
 
             # Build and persist final prompt
@@ -392,5 +307,4 @@ class KnowledgeManager:
             answer = wrong_answer_prompt(self.language)
             
         return answer
-
 
