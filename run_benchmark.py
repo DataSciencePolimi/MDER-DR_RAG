@@ -9,7 +9,7 @@ from private_settings import PRIVATE_SETINGS
 
 if __name__ == "__main__":
     # Load the dataset
-    dataset = pd.read_csv("benchmark/backup/DatasetQA.csv")
+    dataset = pd.read_csv("benchmark/benchmark_dataset.csv")
 
     # Create the Guru instance
     if PRIVATE_SETINGS["LLM_LOCAL"]:
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     result = Benchmark.run(guru, dataset, "Question - ", languages, "Region")
 
     # Save the result to a CSV file
-    result.to_csv("benchmark/energy_benchmark.csv", columns=["Question - Italiano", "Answer - Italiano", "ANSWER_Italiano", "Question - English", "Answer - English", "ANSWER_English", "Source", "Region"], index=False)
+    result.to_csv("benchmark/benchmark_results.csv", columns=["Question - Italiano", "Answer - Italiano", "ANSWER_Italiano", "Question - English", "Answer - English", "ANSWER_English", "Source", "Region"], index=False)
 
