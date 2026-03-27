@@ -248,7 +248,7 @@ class KnowledgeManager:
                 print(f"\n\n-----Entities for {rel.source.id}-----")
                 print("\n".join([f"{entity}" for entity in source_entities]))
 
-                # Merge into global candidate list and cap size.
+                # Merge into global candidate list
                 all_entities = self._update_entries(all_entities, source_entities)
                 
                 # --- Target ---
@@ -262,7 +262,7 @@ class KnowledgeManager:
                 print(f"\n\n-----Entities for {rel.target.id}-----")
                 print("\n".join([f"{entity}" for entity in target_entities]))
 
-                # Merge into global candidate list and cap size.
+                # Merge into global candidate list and cap size
                 all_entities = self._update_entries(all_entities, target_entities)
                 all_entities = all_entities[:GRAPH_PARAMETER["MAXIMUM_ENTITIES"]]
 
