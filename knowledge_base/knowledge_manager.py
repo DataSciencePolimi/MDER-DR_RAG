@@ -222,11 +222,12 @@ class KnowledgeManager:
                         matches = re.findall(pattern, trps)
                         if matches:
                             print(f"\n\n-----Reasoning on the triples-----")
-                            for i, (src_id, rel_id, tgt_id) in enumerate(matches):
+                            # Only update the overlapping part
+                            for (src_id, rel_id, tgt_id), triple in zip(matches, question_triples[:rel_i+1]):
                                 print(src_id, rel_id, tgt_id)
-                                question_triples[i].source.id = process_name_or_relationship(src_id)
-                                question_triples[i].rel.id = process_name_or_relationship(rel_id)
-                                question_triples[i].target.id = process_name_or_relationship(tgt_id)
+                                triple.source.id = process_name_or_relationship(src_id)
+                                triple.rel.id = process_name_or_relationship(rel_id)
+                                triple.target.id = process_name_or_relationship(tgt_id)
                             break # Ok
                     
                 # --- Embeddings ---
@@ -249,6 +250,20 @@ class KnowledgeManager:
 
                 # Merge into global candidate list and cap size.
                 all_entities = self._update_entries(all_entities, source_entities)
+                
+                # --- Target ---
+                
+                # Target entities
+                target_entities = collection_entities.query( # FOR MDER-DR AND GRAPH-RAG
+                    query_embeddings=rel.target.embedding,
+                    n_results=GRAPH_PARAMETER["TOP_ENTITIES"],
+                )
+                target_entities = [{"id": id, "distance": distance} for (id, distance) in zip(source_entities["ids"][0], target_entities["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD"]] if target_entities else []
+                print(f"\n\n-----Entities for {rel.target.id}-----")
+                print("\n".join([f"{entity}" for entity in target_entities]))
+
+                # Merge into global candidate list and cap size.
+                all_entities = self._update_entries(all_entities, target_entities)
                 all_entities = all_entities[:GRAPH_PARAMETER["MAXIMUM_ENTITIES"]]
 
             # Get entities
