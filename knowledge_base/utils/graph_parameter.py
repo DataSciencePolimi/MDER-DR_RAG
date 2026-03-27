@@ -1,5 +1,7 @@
 """Module for managing graph parameters."""
 GRAPH_PARAMETER = {
+	"TRIPLE_EXTRACTION_ATTEMPTS": 2,
+	
     "TOP_ENTITIES": 5,
 	"ENTITIES_DISTANCE_THRESHOLD": 0.5,
     "MAXIMUM_ENTITIES": 20,
