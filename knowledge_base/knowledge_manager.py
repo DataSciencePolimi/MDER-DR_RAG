@@ -163,17 +163,20 @@ class KnowledgeManager:
 
         # FOR MDER-DR
         question_triples = [] # Extract triples
-        trps = self.llm_handler.generate_response(extract_triples(), f"{message}", False)
-        pattern = r"\((.*?), (.*?), (.*?)\)"
-        matches = re.findall(pattern, trps)
-        print(f"\n\n-----GraphDocument from the question-----")
-        for src_id, rel_id, tgt_id in matches:
-            print(src_id, rel_id, tgt_id)
-            question_triples.append(SimpleNamespace(
-                source=SimpleNamespace(id=src_id.strip()),
-                rel=SimpleNamespace(id=rel_id.strip()),
-                target=SimpleNamespace(id=tgt_id.strip()),
-            ))
+        for _ in range(GRAPH_PARAMETER["TRIPLE_EXTRACTION_ATTEMPTS"]):
+            trps = self.llm_handler.generate_response(extract_triples(), f"{message}", False)
+            pattern = r"\((.*?), (.*?), (.*?)\)"
+            matches = re.findall(pattern, trps)
+            if matches:
+                print(f"\n\n-----GraphDocument from the question-----")
+                for src_id, rel_id, tgt_id in matches:
+                    print(src_id, rel_id, tgt_id)
+                    question_triples.append(SimpleNamespace(
+                        source=SimpleNamespace(id=src_id.strip()),
+                        rel=SimpleNamespace(id=rel_id.strip()),
+                        target=SimpleNamespace(id=tgt_id.strip()),
+                    ))
+                break # Ok
 
         # Embed the question
         message_embedding = self.embeddings.embed_query(message)
@@ -212,16 +215,19 @@ class KnowledgeManager:
                     all_entity_descriptions_temp = self.graph.get_entity_descriptions(entities=[id["id"] for id in all_entities], distances=[id["distance"] for id in all_entities])
                     all_entity_descriptions_temp = dataframe_to_text(all_entity_descriptions_temp, context_name='')
                     input_trps = "\n".join([f"({rel.source.id}, {rel.rel.id}, {rel.target.id})" for rel in question_triples[:rel_i+1]])
-                    trps = self.llm_handler.generate_response(update_triples(all_entity_descriptions_temp), f"{input_trps}", False)
-                    
-                    pattern = r"\((.*?), (.*?), (.*?)\)"
-                    matches = re.findall(pattern, trps)
-                    print(f"\n\n-----Reasoning on the triples-----")
-                    for src_id, rel_id, tgt_id in matches:
-                        print(src_id, rel_id, tgt_id)
-                        rel.source.id = src_id
-                        rel.rel.id = rel_id
-                        rel.target.id = tgt_id
+
+                    for _ in range(GRAPH_PARAMETER["TRIPLE_EXTRACTION_ATTEMPTS"]):
+                        trps = self.llm_handler.generate_response(update_triples(all_entity_descriptions_temp), f"{input_trps}", False)
+                        pattern = r"\((.*?), (.*?), (.*?)\)"
+                        matches = re.findall(pattern, trps)
+                        if matches:
+                            print(f"\n\n-----Reasoning on the triples-----")
+                            for i, (src_id, rel_id, tgt_id) in enumerate(matches):
+                                print(src_id, rel_id, tgt_id)
+                                question_triples[i].source.id = process_name_or_relationship(src_id)
+                                question_triples[i].rel.id = process_name_or_relationship(rel_id)
+                                question_triples[i].target.id = process_name_or_relationship(tgt_id)
+                            break # Ok
                     
                 # --- Embeddings ---
 
