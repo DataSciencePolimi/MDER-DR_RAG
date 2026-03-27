@@ -258,7 +258,7 @@ class KnowledgeManager:
                     query_embeddings=rel.target.embedding,
                     n_results=GRAPH_PARAMETER["TOP_ENTITIES"],
                 )
-                target_entities = [{"id": id, "distance": distance} for (id, distance) in zip(source_entities["ids"][0], target_entities["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD"]] if target_entities else []
+                target_entities = [{"id": id, "distance": distance} for (id, distance) in zip(target_entities["ids"][0], target_entities["distances"][0]) if distance < GRAPH_PARAMETER["ENTITIES_DISTANCE_THRESHOLD"]] if target_entities else []
                 print(f"\n\n-----Entities for {rel.target.id}-----")
                 print("\n".join([f"{entity}" for entity in target_entities]))
 
