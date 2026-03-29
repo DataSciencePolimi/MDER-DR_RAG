@@ -11,12 +11,16 @@ The paper is available <a href="https://arxiv.org/abs/2603.11223">here</a>.
 - `pip`
 - (Optional) local LLM runtime (e.g., Ollama) if configured in `private_settings.py`
 
-## Installation (venv + requirements.txt)
+## Installation (clone + venv + requirements.txt)
 
 ```bash
+git clone https://github.com/DataSciencePolimi/MDER-DR_RAG.git
+
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
+
+cd MDER-DR_RAG
 pip install -r requirements.txt
 ```
 
